@@ -107,22 +107,28 @@ void printResult(std::vector<int> svFpsArray, const char *playerName, const char
     int svFpsSum = std::accumulate(svFpsArray.begin(), svFpsArray.end(), 0);
     uint32_t averageSVFPS = (uint32_t)std::round(svFpsSum / (float) svFpsArray.size());
 
-    std::cout << "Player:  \"" << playerName << "\"" << std::endl;
-    std::cout << "Server:  \"" << serverName << "\"" << std::endl;
-    std::cout << "Average sv_fps: " << averageSVFPS << std::endl;
-    std::cout << "Verdict: ";
+
+    std::cout << "| Player:  " << playerName << std::endl;
+    std::cout << "| Server:  " << serverName  << std::endl;
+
+    std::cout << "| Avg sv_fps: ";
+    SetConsoleTextAttribute(consoleHandle, averageSVFPS == 20 ? 10 : 12);
+    std::cout << averageSVFPS << std::endl;
+
+    SetConsoleTextAttribute(consoleHandle, 15);
+    std::cout << "| Verdict: ";
 
     if (averageSVFPS != 20) {
-        SetConsoleTextAttribute(consoleHandle, FOREGROUND_RED);
+        SetConsoleTextAttribute(consoleHandle, 12);
         std::cout << "Cheated";
     }
     else {
-        SetConsoleTextAttribute(consoleHandle, FOREGROUND_GREEN);
+        SetConsoleTextAttribute(consoleHandle, 10);
         std::cout << "Clean";
     }
 
     SetConsoleTextAttribute(consoleHandle, 15);
-    std::cout << std::endl;
+    std::cout << std::endl << "|============================|" << std::endl;
 }
 
 void analyzeDemo(HANDLE processHandle, uintptr_t moduleBase) {
@@ -154,6 +160,11 @@ void analyzeDemo(HANDLE processHandle, uintptr_t moduleBase) {
 int main(int argc, char* argv[])
 {
 
+    HWND console = GetConsoleWindow();
+    RECT r;
+    GetWindowRect(console, &r);
+    MoveWindow(console, r.left, r.top, 800, 700, TRUE);
+
     //Get Process Id of cod4
     DWORD processId = getProcessIdByName(L"iw3mp.exe");
     //std::cout << "Cod4 PID: " << processId << std::endl;
@@ -167,7 +178,44 @@ int main(int argc, char* argv[])
 
     //Main Menu
     SetConsoleTextAttribute(consoleHandle, 11);
-    std::cout << "[    peepos sv_fps checker 0.1    ]" << std::endl << std::endl;
+    const char *intro3 = 
+        "                                                                              \n\
+                                               ,,,,,                                   \n\
+                                     ,,,,,,,,,,,,,,,,,,,,,,,,,                         \n\
+                                 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,                    \n\
+                              ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,                 \n\
+                           ,,,,,,,,,,,,,,,,,.          ,,,,,,,,,,,,,,,//*              \n\
+                          ,,,,,,,,,,,,,,                      ,,,,,,,//////*           \n\
+                       ,,,,,,,,,,,,             @               ,///////////           \n\
+                      ,,,,,,,,,,,              @/(                 //////////*         \n\
+                     ,,,,,,,,,,.              .//#%                 ///////////        \n\
+                    ,,,,,,,,,,                ///##@                 ,/////////#       \n\
+                    ,,,,,,,,,     &//********////##///////@@@%/@      //////////       \n\
+                   ,,,,,,,,,,        @//////***//(/(%%@     @          /////////       \n\
+                   ,,,,,,,,,,           @(////**/(///%      @          /////////       \n\
+                   ,,,,,,,,,,            //***///%%@   #@   @          /////////       \n\
+                   (,,,,,,,,,            /**/////%@   @#@   @          /////////       \n\
+                    ,,,,,,,,,,          %*////@  @          ##       //////////        \n\
+                     ,,,,,,,,,,        @*/@      @&&&&&&&   &&#      //////////        \n\
+                     %,,,,,,,,,,      @@                @   @      ///////////         \n\
+                       ,,,,,,,,,,,                      @@@@@    ////////////          \n\
+                       %*,,,,,,,,////                         ,////////////            \n\
+                    %%%%%%,,,,///////////,                ///////////////*             \n\
+                  %%%%%%%%%%%//////////////////////////////////////////                \n\
+               %%%%%%%%%%&&&&&&(////////////////////////////////////                   \n\
+             %%%%%%%%%%&&&&&&&&&&@@*////////////////////////////#                      \n\
+          %%%%%%%%%%&&&&&&&&&&           *////////////////                             \n\
+        %%%%%%%%%%&&&&&&&&&&                                                           \n\
+     %%%%%%%%%%&&&&&&&&&&                                                              \n\
+   %%%%%%%%%%&&&&&&&&&&                                                                \n\
+ %%%%%%%%%&&&&&&&&&&               ~   sv_fps checker v1.0   ~                         \n\
+%%%%%%%%&&&&&&&&&&                                                                     \n\
+ %%%%&&&&&&&&&&                                                                        \n\
+  %&&&&&&&&&&                                                                          \n";
+
+
+    std::cout << intro3 << std::endl << std::endl;
+    
 
     do {
         analyzeDemo(processHandle, moduleBase);
