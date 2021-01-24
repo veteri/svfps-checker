@@ -14,13 +14,12 @@ static bool isSilent = false;
 static HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 
-void getPlayerNameBlocking(HANDLE processHandle, char* dest) {
-    uintptr_t offset = 0x83927c;
+void getStringBlocking(HANDLE processHandle, uintptr_t address, char* dest) {
     char c = 0;
     int position = 0;
     do {
-        ReadProcessMemory(processHandle, (void*)(offset + position), &c, sizeof(c), nullptr);
-        //Wait until entity struct has been created
+        ReadProcessMemory(processHandle, (void*)(address + position), &c, sizeof(c), nullptr);
+        //Wait until game loaded the map
         if (position == 0 && c == 0) {
             Sleep(10);
             continue;
@@ -59,6 +58,7 @@ void cleanResult(std::vector<int> *pSvFpsArray) {
 void performScan(HANDLE processHandle, uintptr_t moduleBaseAddress, std::vector<int> *pSvFpsArray) {
 
     system("cls");
+    SetConsoleTextAttribute(consoleHandle, 15);
     std::cout << " ----------------------------" << std::endl;
     std::cout << "|     Collecting data...     |" << std::endl;
    
@@ -102,12 +102,13 @@ void performScan(HANDLE processHandle, uintptr_t moduleBaseAddress, std::vector<
    
 }
 
-void printResult(std::vector<int> svFpsArray, const char *name) {
+void printResult(std::vector<int> svFpsArray, const char *playerName, const char *serverName) {
 
     int svFpsSum = std::accumulate(svFpsArray.begin(), svFpsArray.end(), 0);
     uint32_t averageSVFPS = (uint32_t)std::round(svFpsSum / (float) svFpsArray.size());
 
-    std::cout << "Player:  \"" << name << "\"" << std::endl;
+    std::cout << "Player:  \"" << playerName << "\"" << std::endl;
+    std::cout << "Server:  \"" << serverName << "\"" << std::endl;
     std::cout << "Average sv_fps: " << averageSVFPS << std::endl;
     std::cout << "Verdict: ";
 
@@ -126,15 +127,18 @@ void printResult(std::vector<int> svFpsArray, const char *name) {
 
 void analyzeDemo(HANDLE processHandle, uintptr_t moduleBase) {
 
-    SetConsoleTextAttribute(consoleHandle, 15);
-    std::cout << "Waiting for demo..." << std::endl;
+    SetConsoleTextAttribute(consoleHandle, 14);
+    std::cout << std::endl << "Waiting for demo..." << std::endl;
     while (!isIngame(processHandle, moduleBase)) {
         Sleep(10);
     }
 
     //Get name of demo performer
-    char name[100] = { 0 };
-    getPlayerNameBlocking(processHandle, name);
+    char playerName[100] = { 0 };
+    char serverName[100] = { 0 };
+    getStringBlocking(processHandle, moduleBase + 0x43927C, playerName);
+    getStringBlocking(processHandle, moduleBase + 0x34A948, serverName);
+
 
     //Scan sv_fps for duration of demo
     std::vector<int> svFpsArray;
@@ -144,7 +148,7 @@ void analyzeDemo(HANDLE processHandle, uintptr_t moduleBase) {
     cleanResult(&svFpsArray);
 
     //Print verdict
-    printResult(svFpsArray, name);
+    printResult(svFpsArray, playerName, serverName);
 }
 
 int main(int argc, char* argv[])
@@ -167,7 +171,6 @@ int main(int argc, char* argv[])
 
     do {
         analyzeDemo(processHandle, moduleBase);
-        std::cout << "(Press any key for another scan)" << std::endl;
     } while (true);
 
     return 0;
