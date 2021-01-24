@@ -5,7 +5,6 @@
 #include <Windows.h>
 #include "Process.h"
 
-
 #define LEGIT 0x0
 #define CHEATED 0x1
 
@@ -15,16 +14,25 @@ static bool isSilent = false;
 static HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 
-void readCOD4PlayerName(HANDLE processHandle, char* dest) {
+void getPlayerNameBlocking(HANDLE processHandle, char* dest) {
     uintptr_t offset = 0x83927c;
     char c = 0;
     int position = 0;
     do {
-        ReadProcessMemory(processHandle, (BYTE*)offset, &c, sizeof(c), 0);
-        dest[position] = c;
-        position++;
-        offset++;
-    } while (c != 0);
+        ReadProcessMemory(processHandle, (void*)(offset + position), &c, sizeof(c), nullptr);
+        //Wait until entity struct has been created
+        if (position == 0 && c == 0) {
+            Sleep(10);
+            continue;
+        }
+
+        dest[position++] = c;
+
+        if (c == 0) {
+            break;
+        }
+
+    } while (true);
 }
 
 int isIngame(HANDLE processHandle, uintptr_t moduleBase) {
@@ -124,10 +132,9 @@ void analyzeDemo(HANDLE processHandle, uintptr_t moduleBase) {
         Sleep(10);
     }
 
-
     //Get name of demo performer
     char name[100] = { 0 };
-    readCOD4PlayerName(processHandle, name);
+    getPlayerNameBlocking(processHandle, name);
 
     //Scan sv_fps for duration of demo
     std::vector<int> svFpsArray;
@@ -161,7 +168,6 @@ int main(int argc, char* argv[])
     do {
         analyzeDemo(processHandle, moduleBase);
         std::cout << "(Press any key for another scan)" << std::endl;
-        (void)getchar();
     } while (true);
 
     return 0;
