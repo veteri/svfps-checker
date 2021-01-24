@@ -14,7 +14,7 @@ static bool isSilent = false;
 static HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 
-void getStringBlocking(HANDLE processHandle, uintptr_t address, char* dest) {
+void getStringBlocking(HANDLE processHandle, uintptr_t address, char* dest) { 
     char c = 0;
     int position = 0;
     do {
